@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Video Player</title>
+    <style>
+      #drop-zone {
+        background-color: lightgray;
+        border: 2px dashed black;
+        height: 200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Video Player</h1>
+    <div id="drop-zone">
+      Drop a video file here
+    </div>
+    <br>
+    <video controls id="video-player" style="display: none;"></video>
+    <script>
+      const dropZone = document.getElementById("drop-zone");
+      const videoPlayer = document.getElementById("video-player");
+
+      dropZone.addEventListener("dragover", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.style.backgroundColor = "lightblue";
+      });
+
+      dropZone.addEventListener("dragleave", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.style.backgroundColor = "lightgray";
+      });
+
+      dropZone.addEventListener("drop", e => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        dropZone.style.backgroundColor = "lightgray";
+
+        const file = e.dataTransfer.files[0];
+        const URL = window.URL || window.webkitURL;
+        videoPlayer.src = URL.createObjectURL(file);
+        videoPlayer.style.display = "block";
+      });
+    </script>
+  </body>
+</html>

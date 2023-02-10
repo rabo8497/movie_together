@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="shortcut icon" href="#">
+    <title>Video Player</title>
+    <style>
+      body {
+         background-color: #2f2f2f;
+      }
+
+      h1 {
+         text-align: center;
+         color: white;
+         font-size: 36px;
+         margin-top: 50px;
+      }
+
+      #player {
+         width: 80%;
+         margin: 0 auto;
+         display: block;
+      }
+   </style>
+  </head>
+  <body>
+    <header>
+      <h1>Anime - Video Player</h1>
+   </header>
+    <video id="video" src="" controls></video>
+    <input type="file" id="fileInput" />
+    <button id="syncbutton">Sync</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const video = document.getElementById('video');
+        const fileInput = document.getElementById('fileInput');
+        const syncbutton = document.getElementById('syncbutton');
+        let seeking = false;
+        let previousTime = 0;
+
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            const fileURL = URL.createObjectURL(file);
+            video.src = fileURL;
+            socket.emit('video_change', fileURL)
+        });
+
+
+        socket.on('seek', (time) => {
+            if (!seeking) {
+                video.currentTime = time;
+                if (video.pause) {
+                video.play()
+                }
+            }
+        });
+        socket.on('play', () => {
+            if (!seeking) {
+                video.play();
+            }
+        });
+        socket.on('pause', () => {
+            if (!seeking) {
+                video.pause();
+            }
+        });
+        socket.on('video_change_from_server', (link) => {
+            video.src = link
+        });
+        socket.on('sync_to_me_other', (link, is_play, time) => {
+            video.src = link
+            video.currentTime = time;
+            if (is_play) {
+                video.play();
+            }
+            else if (!is_play) {
+                video.pause();
+            }
+        });
+
+
+
+        video.addEventListener('seeking', (event) => {
+            seeking = true;
+        });
+        video.addEventListener('seeked', (event) => {
+            seeking = false;
+            if (previousTime !== video.currentTime) {
+                socket.emit('seek', video.currentTime);
+                previousTime = video.currentTime;
+            }
+        });
+        video.addEventListener('play', (event) => {
+            if (!seeking) {
+                socket.emit('play', video.currentTime);
+            }
+        });
+        video.addEventListener('pause', (event) => {
+            if (!seeking) {
+                socket.emit('pause', video.currentTime);
+            }
+        });
+
+        syncbutton.addEventListener('click', function() {
+            socket.emit('sync_others')
+        });         
+
+    </script>
+  </body>
+</html>
