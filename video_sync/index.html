@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="shortcut icon" href="#">
+    <title>Video Player</title>
+    <style>
+      body {
+         background-color: #2f2f2f;
+      }
+
+      h1 {
+         text-align: center;
+         color: white;
+         font-size: 36px;
+         margin-top: 50px;
+      }
+
+      #player {
+         width: 80%;
+         margin: 0 auto;
+         display: block;
+      }
+   </style>
+  </head>
+  <body>
+    <header>
+      <h1>Anime - Otaku Video Player</h1>
+   </header>
+    <video id="video" src="/video.mp4" controls></video>
+    <button id="playButton">Play</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const video = document.getElementById('video');
+      let seeking = false;
+      let previousTime = 0;
+
+      socket.on('seek', (time) => {
+          if (!seeking) {
+              video.currentTime = time;
+              if (video.pause) {
+                video.play()
+              }
+          }
+      });
+
+      socket.on('play', () => {
+          if (!seeking) {
+              video.play();
+          }
+      });
+
+      socket.on('pause', () => {
+          if (!seeking) {
+              video.pause();
+          }
+      });
+
+      video.addEventListener('seeking', (event) => {
+          seeking = true;
+      });
+
+      video.addEventListener('seeked', (event) => {
+          seeking = false;
+          if (previousTime !== video.currentTime) {
+              socket.emit('seek', video.currentTime);
+              previousTime = video.currentTime;
+          }
+      });
+
+      video.addEventListener('play', (event) => {
+          if (!seeking) {
+              console.log(1)
+              socket.emit('play');
+          }
+      });
+
+      video.addEventListener('pause', (event) => {
+          if (!seeking) {
+              socket.emit('pause');
+          }
+      });
+
+
+    </script>
+  </body>
+</html>
