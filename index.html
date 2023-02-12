@@ -20,6 +20,15 @@
          margin: 0 auto;
          display: block;
       }
+      #drop-zone {
+        background-color: lightgray;
+        border: 2px dashed black;
+        height: 200px;
+        width: 500px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
    </style>
   </head>
   <body>
@@ -29,15 +38,46 @@
     <video id="video" src="" controls></video>
     <input type="file" id="fileInput" />
     <button id="syncbutton">Sync</button>
+
+    <div id="drop-zone">
+        Drop a video file here
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
     <script>
         const socket = io();
         const video = document.getElementById('video');
         const fileInput = document.getElementById('fileInput');
         const syncbutton = document.getElementById('syncbutton');
+        const dropZone = document.getElementById("drop-zone");
+
         let seeking = false;
         let previousTime = 0;
 
+        // 파일 업로드
+        dropZone.addEventListener("dragover", e => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.backgroundColor = "lightblue";
+        });
+            dropZone.addEventListener("dragleave", e => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.backgroundColor = "lightgray";
+        });
+
+        dropZone.addEventListener("drop", e => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            dropZone.style.backgroundColor = "lightgray";
+
+            const file = e.dataTransfer.files[0];
+            const URL = window.URL || window.webkitURL;
+            video.src = URL.createObjectURL(file);
+            video.style.display = "block";
+            socket.emit('video_change', video.src)
+        });
         fileInput.addEventListener('change', function() {
             const file = this.files[0];
             const fileURL = URL.createObjectURL(file);
@@ -45,7 +85,7 @@
             socket.emit('video_change', fileURL)
         });
 
-
+        // 영상 동기화 기능
         socket.on('seek', (time) => {
             if (!seeking) {
                 video.currentTime = time;
