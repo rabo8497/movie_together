@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Synchronized Video</title>
+  </head>
+  <body>
+    <video id="video" src="/video.mp4"></video>
+    <br>
+    <button id="play-pause-button" onclick="togglePlay()">Pause</button>
+    <br>
+    <input type="range" id="seek-bar" onchange="seek(this.value)">
+    <script>
+      const socket = new WebSocket('ws://localhost:3000');
+
+      socket.addEventListener('message', (event) => {
+        const data = JSON.parse(event.data);
+        updateVideo(data);
+      });
+
+      function updateVideo(state) {
+        const video = document.getElementById('video');
+        video.currentTime = state.currentTime;
+        if (state.playing) {
+          video.play();
+          document.getElementById('play-pause-button').innerText = 'Pause';
+        } else {
+          video.pause();
+          document.getElementById('play-pause-button').innerText = 'Play';
+        }
+      }
+
+      function togglePlay() {
+        const video = document.getElementById('video');
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+        socket.send(JSON.stringify({ playing: !video.paused, currentTime: video.currentTime }));
+        document.getElementById('play-pause-button').innerText = video.paused ? 'Play' : 'Pause';
+      }
+
+
+
+      function seek(time) {
+        socket.send(JSON.stringify({ currentTime: time }));
+      }
+    </script>
+  </body>
+</html>
